@@ -1,54 +1,50 @@
 const express = require("express");
 const routes = express.Router();
-const jwt = require('jsonwebtoken')
 // const login = require("./modules/login")
 var db = require("./DBconnect")
 // const token
 //create
-var signOptions = {
-    issuer: 'javAndroid.com',
-    subject: 'javAndroidClient',
-    audience: 'javAndroidClient',
-    expiresIn: "12h",
-    algorithm: "RS256"
-};
+// var signOptions = {
+//     issuer: 'javAndroid.com',
+//     subject: 'javAndroidClient',
+//     audience: 'javAndroidClient',
+//     expiresIn: "12h",
+//     algorithm: "RS256"
+// };
 
 db.connect(err => {
     if (err) throw err
     console.log('You are now connected...')
 })
-routes.route("/login/:username/:password").get((req, res) => {
+routes.route("/login").post((req, res) => {
     console.log("login...");
-    console.log(req.params);
+    console.log(req.body);
 
-    db.query("SELECT * FROM accounts where username = '" + req.params.username + "' and password = '" + req.params.password + "'", function (err, result, fields) {
+    db.query("SELECT * FROM accounts where username = '" + req.body.username + "' and password = '" + req.body.password + "'", function (err, result, fields) {
         if (err) {
             console.log(err);
             res.send({ error: { status: true, message: err } })
         } else {
             if (!result.length) {
-                return res.send({ error: { status: false, message: "account not found!" }, acessToken: null })
+                return res.send({ error: { status: false, message: "account not found!" },auth: false, user: null  })
             }
-            var token = jwt.sign({ data: result[0] }, 'javAndroid');
-            res.send({ error: { status: false, message: null }, acessToken: token })
+            res.send({ error: { status: false, message: null }, auth: true, user: result[0] })
             console.log(result[0]);
 
         }
     });
 });
 
-routes.route("/register/:username/:password").get((req, res) => {
-    console.log("register...");
+routes.route("/register/:username/:password").post((req, res) => {
 
-    var sql = "INSERT INTO accounts (username, password) VALUES ('" + req.params.username + "' , '" + req.params.password + "')";
+    var sql = "INSERT INTO accounts (username, password) VALUES ('" + req.body.username + "' , '" + req.body.password + "')";
     db.query(sql, function (err, result) {
-        console.log(result);
+
         if (err) {
             console.log(err.sqlMessage);
             res.send({ error: { status: true, message: err.sqlMessage } })
         } else {
-            var token = jwt.sign(req.params, 'javAndroid');
-            res.send({ error: { status: false, message: null }, token: token })
+            res.send({ error: { status: false, message: null }, token: "javAndroid" })
         }
     });
 });
